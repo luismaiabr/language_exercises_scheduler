@@ -140,6 +140,12 @@ class LessonScheduler:
         """
         Runs the scheduler as a continuous background daemon, polling every interval_seconds.
         """
+        if settings.INSTANT_DISPATCH:
+            logger.info(
+                "INSTANT_DISPATCH is enabled. Scheduler daemon polling is disabled (lessons are delivered immediately upon creation)."
+            )
+            return
+
         interval = interval_seconds or settings.POLL_INTERVAL_SECONDS
         self._running = True
 

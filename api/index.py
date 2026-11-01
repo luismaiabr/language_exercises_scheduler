@@ -36,6 +36,8 @@ def health_check():
     return {
         "status": "healthy",
         "service": "language_exercises_scheduler",
+        "instant_dispatch": settings.INSTANT_DISPATCH,
+        "scheduler_daemon_enabled": not settings.INSTANT_DISPATCH,
         "smtp_configured": settings.is_smtp_configured,
         "dry_run": settings.DRY_RUN,
         "frontend_base_url": settings.FRONTEND_BASE_URL,
@@ -62,4 +64,3 @@ def run_cron_cycle(authorization: str | None = Header(default=None)):
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "processed_count": processed,
     }
-

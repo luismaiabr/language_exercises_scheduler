@@ -23,6 +23,7 @@ def print_status():
     print(f"SMTP Host:         {settings.SMTP_HOST}:{settings.SMTP_PORT}")
     print(f"SMTP User:         {settings.SMTP_USER}")
     print(f"SMTP Configured:   {settings.is_smtp_configured}")
+    print(f"Instant Dispatch:  {settings.INSTANT_DISPATCH} ({'Scheduler daemon disabled - delivery occurs immediately on creation' if settings.INSTANT_DISPATCH else 'Scheduler daemon active'})")
     print(f"Dry Run Mode:      {settings.DRY_RUN}")
     print(f"Frontend URL:      {settings.FRONTEND_BASE_URL}")
     print(f"Poll Interval:     {settings.POLL_INTERVAL_SECONDS}s")

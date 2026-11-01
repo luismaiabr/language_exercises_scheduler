@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     SMTP_TIMEOUT: int = Field(default_factory=lambda: int(_yaml_cfg.get("smtp", {}).get("timeout_seconds", 15)))
 
     # Scheduler Settings
+    INSTANT_DISPATCH: bool = Field(default_factory=lambda: bool(_yaml_cfg.get("scheduler", {}).get("instant_dispatch", False)))
     FRONTEND_BASE_URL: str = Field(default="http://localhost:5173")
     POLL_INTERVAL_SECONDS: int = Field(default_factory=lambda: int(_yaml_cfg.get("scheduler", {}).get("poll_interval_seconds", 60)))
     MAX_RETRIES: int = Field(default_factory=lambda: int(_yaml_cfg.get("scheduler", {}).get("max_retries", 3)))
