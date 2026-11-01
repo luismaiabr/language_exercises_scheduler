@@ -210,6 +210,42 @@ def test_inactive_user_handling():
     assert len(mailer.mock_sent_emails) == 0
     assert schedule.status == "cancelled"
 
+def test_today_pending_schedules_dispatched_immediately():
+    """Verify that any pending lesson scheduled for anytime today is sent immediately."""
+    db = SchedulerDatabase(use_mock=True)
+    mailer = SMTPEmailService(is_mock=True)
+    sched = LessonScheduler(db=db, mailer=mailer)
+
+    user_id = uuid4()
+    db._mock_users[str(user_id)] = {
+        "id": str(user_id),
+        "name": "Fritz",
+        "email": "fritz@example.com",
+        "is_active": True,
+    }
+
+    # Reference time is today at 08:00 UTC
+    now = datetime(2026, 11, 1, 8, 0, 0, tzinfo=timezone.utc)
+    # Schedule is set for later today at 18:30 UTC
+    later_today = datetime(2026, 11, 1, 18, 30, 0, tzinfo=timezone.utc)
+    schedule = UserScheduleRow(
+        id=uuid4(),
+        user_id=user_id,
+        email="fritz@example.com",
+        course_name="German Theory",
+        lesson_id=9,
+        when_to_send=later_today,
+        status="pending",
+    )
+    db._mock_schedules.append(schedule)
+
+    # When scheduler queries at 08:00, it must dispatch this pending lesson for today immediately
+    count = sched.run_once(target_time=now)
+    assert count == 1
+    assert len(mailer.mock_sent_emails) == 1
+    assert mailer.mock_sent_emails[0]["to"] == "fritz@example.com"
+    assert schedule.status == "sent"
+
 if __name__ == "__main__":
     print("Running language_exercises_scheduler tests...")
     test_config_loading()
@@ -218,6 +254,8 @@ if __name__ == "__main__":
     print("[OK] test_email_templates_render passed.")
     test_process_due_schedules()
     print("[OK] test_process_due_schedules passed.")
+    test_today_pending_schedules_dispatched_immediately()
+    print("[OK] test_today_pending_schedules_dispatched_immediately passed.")
     test_future_schedules_not_dispatched()
     print("[OK] test_future_schedules_not_dispatched passed.")
     test_smtp_failure_handling()

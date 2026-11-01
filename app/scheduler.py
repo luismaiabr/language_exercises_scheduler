@@ -24,7 +24,7 @@ class LessonScheduler:
 
     def process_due_schedules(self, target_time: Optional[datetime] = None) -> int:
         """
-        Scans database for pending user_schedules where when_to_send <= target_time,
+        Scans database for pending user_schedules where when_to_send is today or earlier,
         composes the lesson email with the magic link and exercises, and dispatches via SMTP.
         Returns the number of successfully delivered emails.
         """
@@ -129,6 +129,12 @@ class LessonScheduler:
 
         logger.info(f"Dispatch cycle completed: {dispatched_count}/{len(due_schedules)} emails delivered.")
         return dispatched_count
+
+    def run_once(self, target_time: Optional[datetime] = None) -> int:
+        """
+        Executes a single scheduler cycle for pending lessons due today.
+        """
+        return self.process_due_schedules(target_time=target_time)
 
     def start_daemon(self, interval_seconds: Optional[int] = None):
         """

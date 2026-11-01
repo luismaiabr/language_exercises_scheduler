@@ -78,9 +78,15 @@ class SchedulerDatabase:
         self, target_time: Optional[datetime] = None, limit: Optional[int] = None
     ) -> List[UserScheduleRow]:
         """
-        Fetch user_schedules rows where status == 'pending' and when_to_send <= target_time.
+        Fetch user_schedules rows where status == 'pending' and when_to_send <= end of target day.
+        Any pending lessons for today (or overdue from earlier) are dispatched immediately.
         """
-        now = target_time or datetime.now(timezone.utc)
+        ref_time = target_time or datetime.now(timezone.utc)
+        if ref_time.tzinfo is None:
+            ref_time = ref_time.replace(tzinfo=timezone.utc)
+        end_of_today = datetime(
+            ref_time.year, ref_time.month, ref_time.day, 23, 59, 59, 999999, tzinfo=ref_time.tzinfo
+        )
         lim = limit or settings.BATCH_SIZE
 
         if self.client:
@@ -89,7 +95,7 @@ class SchedulerDatabase:
                     self.client.table("user_schedules")
                     .select("*")
                     .eq("status", "pending")
-                    .lte("when_to_send", now.isoformat())
+                    .lte("when_to_send", end_of_today.isoformat())
                     .order("when_to_send", desc=False)
                     .limit(lim)
                     .execute()
@@ -102,7 +108,7 @@ class SchedulerDatabase:
         for s in self._mock_schedules:
             if s.status == "pending":
                 s_time = s.when_to_send if s.when_to_send.tzinfo else s.when_to_send.replace(tzinfo=timezone.utc)
-                if s_time <= now:
+                if s_time <= end_of_today:
                     due.append(s)
         due.sort(key=lambda s: s.when_to_send)
         return due[:lim]
